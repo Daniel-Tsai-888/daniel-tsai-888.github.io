@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <!-- RWD 必要的 meta -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>塔羅牌</title>
+  <style>
+    /* ====== 主要樣式 (含 RWD) ====== */
+    body {
+      margin: 0; 
+      padding: 0;
+      font-family: "Noto Sans", "Microsoft JhengHei", sans-serif;
+      background-color: #F0FFF0; 
+      background-image: url("https://source.unsplash.com/1600x900/?texture,landscape&blur=8");
+      background-size: cover;       
+      background-position: center;  
+      background-repeat: no-repeat; 
+      background-blend-mode: lighten; 
+      color: #333;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: rgba(255, 255, 255, 0.7);
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      text-align: center;
+      color: #444;
+      font-size: 1.5rem;
+    }
+
+    /* 占卜項目 (下拉式選單) */
+    .divination-type-container {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1rem;
+      color: #444;
+    }
+    .divination-type-container label {
+      cursor: pointer;
+      margin-right: 10px;
+      font-weight: bold;
+    }
+    .divination-select {
+      font-size: 1rem;
+      padding: 6px 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      min-width: 200px;
+    }
+
+    /* 牌陣選擇 */
+    .spread-container {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1rem;
+      color: #444;
+    }
+    .spread-container label {
+      cursor: pointer;
+      margin-right: 10px;
+      font-weight: bold;
+    }
+    .spread-select {
+      font-size: 1rem;
+      padding: 6px 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      min-width: 200px;
+    }
+
+    /* 說明文字 */
+    .instruction-text {
+      text-align: center;
+      color: #666;
+      margin-bottom: 20px;
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
+    /* 按鈕區 */
+    .btn-container {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .btn {
+      background-color: #EBDDC8; 
+      color: #333;
+      border: 1px solid #d3c2aa;
+      border-radius: 4px;
+      padding: 8px 16px;
+      margin: 0 5px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: background-color 0.3s ease;
+    }
+    .btn:hover {
+      background-color: #f1e7d8;
+    }
+
+    /* 下載結果（圖片）按鈕：無底色 + 透明 */
+    .btn-download {
+      background-color: transparent; 
+      border: 1px solid #ee9d73;
+      color: #333;
+    }
+    .btn-download:hover {
+      background-color: #fff6f0;
+    }
+
+    /* 主抽區域 (網格) */
+    #resultArea {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(6, auto);
+      grid-gap: 10px; 
+      justify-content: center; 
+    }
+
+    /* 主抽區標題 */
+    .section-title {
+      grid-column: 1 / -1;
+      text-align: center;
+      font-weight: bold;
+      color: #444;
+      margin-bottom: 10px;
+    }
+
+    /* 卡片: 寬度固定、置中、文字不換行 */
+    .card {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+      text-align: center;
+      box-shadow: 0 2px 3px rgba(0, 0, 0, 0.06);
+      box-sizing: border-box;
+      width: 120px;           /* 固定卡片寬度 */
+      margin: 0 auto;         /* 置中顯示 */
+    }
+    .card-name,
+    .card-orientation {
+      white-space: nowrap;
+    }
+
+    footer {
+      text-align: center;
+      margin: 20px auto;
+      color: #666;
+      font-size: 0.9rem;
+    }
+    /* 頁面下方的「十號出口」四字增加框線、暖色系底色 */
+    footer a {
+      color: #666; 
+      text-decoration: none;
+      border: 1px solid #d3c2aa;       
+      background-color: #f8eace;      
+      padding: 3px 6px;
+      border-radius: 4px;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* RWD: 小螢幕單欄 */
+    @media (max-width: 768px) {
+      .container {
+        margin: 10px auto;
+        padding: 10px;
+      }
+      h1 { font-size: 1.3rem; }
+      .instruction-text { font-size: 0.9rem; }
+      .divination-select, .spread-select {
+        width: 100%;
+        max-width: 300px;
+      }
+      #resultArea {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        grid-gap: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>塔羅牌</h1>
+
+    <!-- 占卜項目 -->
+    <div class="divination-type-container">
+      <label for="divinationSelect">請選擇占卜項目：</label>
+      <select id="divinationSelect" class="divination-select">
+        <option value="事業（自行創業）" selected>事業（自行創業）</option>
+        <option value="工作（受僱性質）">工作（受僱性質）</option>
+        <option value="桃花（單身且無特定對象）">桃花（單身）</option>
+        <option value="感情（有另一半或特定對象詢問）">感情（有對象）</option>
+        <option value="整體運勢（近三個月）">整體運勢（近三個月）</option>
+        <option value="流年運勢（一年整體）">流年運勢（一年）</option>
+        <option value="其它">其它</option>
+      </select>
+    </div>
+
+    <!-- 牌陣選擇 -->
+    <div class="spread-container">
+      <label for="spreadSelect">是否使用牌陣：</label>
+      <select id="spreadSelect" class="spread-select">
+        <option value="noSpread" selected>無牌陣</option>
+        <option value="useSpread">使用牌陣</option>
+      </select>
+    </div>
+
+    <!-- 說明文字 -->
+    <p class="instruction-text">
+      請靜心默唸占卜的問題三次後，請點選下方抽牌的張數。
+    </p>
+
+    <!-- 抽牌按鈕 -->
+    <div class="btn-container">
+      <button id="drawOneBtn" class="btn">一張</button>
+      <button id="drawThreeBtn" class="btn">三張</button>
+      <button id="drawFiveBtn" class="btn">五張</button>
+      <button id="drawTwelveBtn" class="btn">十二張</button>
+    </div>
+
+    <!-- 顯示抽牌結果的區域 (網格) -->
+    <div id="resultArea"></div>
+
+    <!-- 下載結果（圖片）按鈕容器 -->
+    <div id="downloadBtnContainer" style="text-align:center; margin:20px 0;"></div>
+  </div>
+
+  <footer>
+    由
+    <a href="https://wavetarot10exit.pixnet.net/blog" target="_blank">
+      十號出口
+    </a>
+    提供
+  </footer>
+
+  <!-- dom-to-image 用於將指定區塊轉成圖片 -->
+  <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
+
+  <script>
+    // ======== 塔羅牌資料 (78 張) ========
+    const majorArcana = [
+      "0 愚者","I 魔術師","II 女祭司","III 女皇","IV 皇帝","V 教皇",
+      "VI 戀人","VII 戰車","VIII 力量","IX 隱者","X 命運之輪","XI 正義",
+      "XII 倒吊人","XIII 死神","XIV 節制","XV 惡魔","XVI 高塔","XVII 星星",
+      "XVIII 月亮","XIX 太陽","XX 審判","XXI 世界"
+    ];
+    const minorArcanaWands = [
+      "權杖 1","權杖 2","權杖 3","權杖 4","權杖 5","權杖 6","權杖 7","權杖 8","權杖 9","權杖 10",
+      "權杖 侍者","權杖 騎士","權杖 皇后","權杖 國王"
+    ];
+    const minorArcanaCups = [
+      "聖杯 1","聖杯 2","聖杯 3","聖杯 4","聖杯 5","聖杯 6","聖杯 7","聖杯 8","聖杯 9","聖杯 10",
+      "聖杯 侍者","聖杯 騎士","聖杯 皇后","聖杯 國王"
+    ];
+    const minorArcanaSwords = [
+      "寶劍 1","寶劍 2","寶劍 3","寶劍 4","寶劍 5","寶劍 6","寶劍 7","寶劍 8","寶劍 9","寶劍 10",
+      "寶劍 侍者","寶劍 騎士","寶劍 皇后","寶劍 國王"
+    ];
+    const minorArcanaPentacles = [
+      "錢幣 1","錢幣 2","錢幣 3","錢幣 4","錢幣 5","錢幣 6","錢幣 7","錢幣 8","錢幣 9","錢幣 10",
+      "錢幣 侍者","錢幣 騎士","錢幣 皇后","錢幣 國王"
+    ];
+    const minorArcana = [
+      ...minorArcanaWands,
+      ...minorArcanaCups,
+      ...minorArcanaSwords,
+      ...minorArcanaPentacles
+    ];
+    const fullTarotDeck = [...majorArcana, ...minorArcana];
+
+    let usedCardNames = []; // 已抽牌
+    let finalCards = [];    // 主抽+補牌
+
+    let spreadOption = "noSpread";
+    let divinationType = "";
+
+    // 洗牌
+    function shuffle(array){
+      for(let i=array.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    // 取得占卜項目
+    function getSelectedDivinationType(){
+      return document.getElementById("divinationSelect").value;
+    }
+    // 取得牌陣選擇
+    function getSpreadOption(){
+      return document.getElementById("spreadSelect").value;
+    }
+
+    // 抽牌 (count 張)
+    function drawCards(count){
+      let deckCopy = fullTarotDeck.filter(n=>!usedCardNames.includes(n));
+      if(deckCopy.length < count){
+        count = deckCopy.length;
+      }
+      shuffle(deckCopy);
+
+      let drawn = [];
+      for(let i=0; i<count; i++){
+        let cName = deckCopy[i];
+        let orientation = (Math.random()<0.5) ? "正位" : "逆位";
+        drawn.push({ name:cName, orientation });
+        usedCardNames.push(cName);
+      }
+      finalCards = finalCards.concat(drawn);
+      return drawn;
+    }
+
+    // 顯示主抽結果
+    function displayMainCards(cards){
+      const resultArea = document.getElementById("resultArea");
+      resultArea.innerHTML = "";
+
+      // (1) 顯示占卜項目
+      let mainTitle = document.createElement("div");
+      mainTitle.className = "section-title";
+      mainTitle.textContent = "占卜項目：" + divinationType;
+      resultArea.appendChild(mainTitle);
+
+      // (2) 顯示牌陣:已使用/未使用
+      let spreadTitle = document.createElement("div");
+      spreadTitle.className = "section-title";
+      spreadTitle.textContent = (spreadOption==="useSpread") 
+        ? "牌陣：已使用" 
+        : "牌陣：未使用";
+      resultArea.appendChild(spreadTitle);
+
+      // (3) 顯示卡
+      cards.forEach((card, idx)=>{
+        let cardDiv = createCardDiv(card.name, card.orientation);
+        if(spreadOption === "useSpread"){
+          // 第 n 張
+          let indexDiv = document.createElement("div");
+          indexDiv.style.fontSize = "0.8rem";
+          indexDiv.style.color = "#999";
+          indexDiv.textContent = `第 ${idx+1} 張`;
+          cardDiv.prepend(indexDiv);
+        }
+        resultArea.appendChild(cardDiv);
+      });
+
+      // (4) 是否再抽補牌
+      addExtraDrawOption();
+
+      // (5) 產生「下載結果（圖片）」按鈕
+      createDownloadImgButton();
+    }
+
+    // 產生卡片
+    function createCardDiv(name, orientation){
+      let card = document.createElement("div");
+      card.className = "card";
+
+      let nameDiv = document.createElement("div");
+      nameDiv.className = "card-name";
+      nameDiv.textContent = name;
+
+      let oriDiv = document.createElement("div");
+      oriDiv.className = "card-orientation";
+      oriDiv.textContent = orientation;
+
+      card.appendChild(nameDiv);
+      card.appendChild(oriDiv);
+      return card;
+    }
+
+    // 顯示「是否再抽補牌」選項
+    function addExtraDrawOption(){
+      const resultArea = document.getElementById("resultArea");
+      let extraDiv = document.createElement("div");
+      extraDiv.style.gridColumn = "1 / -1";
+      extraDiv.style.textAlign = "center";
+      extraDiv.style.marginTop = "20px";
+
+      extraDiv.innerHTML = `
+        <div style="margin-bottom:10px;">
+          是否要再抽補充牌？
+          <label><input type="radio" name="extraDraw" value="yes" checked> 是</label>
+          <label><input type="radio" name="extraDraw" value="no"> 否</label>
+        </div>
+        <button id="extraConfirmBtn" class="btn">確認</button>
+      `;
+      resultArea.appendChild(extraDiv);
+
+      document.getElementById("extraConfirmBtn").addEventListener("click", ()=>{
+        let userChoice = "no";
+        const radios = extraDiv.querySelectorAll('input[name="extraDraw"]');
+        for(const r of radios){
+          if(r.checked){
+            userChoice = r.value;
+            break;
+          }
+        }
+        if(userChoice==="yes"){
+          displayExtraCardCentered();
+        }
+        extraDiv.remove();
+      });
+    }
+
+    // 顯示補牌
+    function displayExtraCardCentered(){
+      let extras = drawCards(1);
+      if(extras.length === 0){
+        alert("牌組不足，無法再抽。");
+        return;
+      }
+      const resultArea = document.getElementById("resultArea");
+
+      let extraContainer = document.createElement("div");
+      extraContainer.style.gridColumn = "1 / -1";
+      extraContainer.style.display = "grid";
+      extraContainer.style.gridTemplateColumns = "1fr";
+      extraContainer.style.justifyItems = "center";
+      extraContainer.style.marginTop = "20px";
+
+      let extraTitle = document.createElement("div");
+      extraTitle.className = "section-title";
+      extraTitle.textContent = "補充牌：";
+      extraTitle.style.justifySelf = "center";
+      extraContainer.appendChild(extraTitle);
+
+      extras.forEach(c=>{
+        let cardDiv = createCardDiv(c.name, c.orientation);
+        extraContainer.appendChild(cardDiv);
+      });
+      resultArea.appendChild(extraContainer);
+    }
+
+    // 建立「下載結果（圖片）」按鈕 (置中, 不在 #resultArea 內)
+    function createDownloadImgButton(){
+      const dlBtnContainer = document.getElementById("downloadBtnContainer");
+      dlBtnContainer.innerHTML = ""; // 每次重抽都重設
+
+      let dlImgBtn = document.createElement("button");
+      dlImgBtn.classList.add("btn");
+      dlImgBtn.classList.add("btn-download"); // 使用新的暖色系
+      dlImgBtn.textContent = "下載結果（圖片）";
+
+      // dom-to-image => #resultArea => png
+      dlImgBtn.addEventListener("click", ()=>{
+        let node = document.getElementById("resultArea");
+        window.domtoimage.toPng(node).then(dataUrl=>{
+          let link = document.createElement("a");
+          link.download = "tarot_result.png";
+          link.href = dataUrl;
+          link.click();
+        }).catch(error=>{
+          console.error("下載圖片失敗:", error);
+        });
+      });
+
+      dlBtnContainer.appendChild(dlImgBtn);
+    }
+
+    // 綁定 4 個抽牌按鈕
+    document.getElementById("drawOneBtn").addEventListener("click", ()=>{
+      resetAll();
+      spreadOption = getSpreadOption();
+      divinationType = getSelectedDivinationType();
+
+      const cards = drawCards(1);
+      displayMainCards(cards);
+    });
+    document.getElementById("drawThreeBtn").addEventListener("click", ()=>{
+      resetAll();
+      spreadOption = getSpreadOption();
+      divinationType = getSelectedDivinationType();
+
+      const cards = drawCards(3);
+      displayMainCards(cards);
+    });
+    document.getElementById("drawFiveBtn").addEventListener("click", ()=>{
+      resetAll();
+      spreadOption = getSpreadOption();
+      divinationType = getSelectedDivinationType();
+
+      const cards = drawCards(5);
+      displayMainCards(cards);
+    });
+    document.getElementById("drawTwelveBtn").addEventListener("click", ()=>{
+      resetAll();
+      spreadOption = getSpreadOption();
+      divinationType = getSelectedDivinationType();
+
+      const cards = drawCards(12);
+      displayMainCards(cards);
+    });
+
+    function resetAll(){
+      usedCardNames = [];
+      finalCards = [];
+      document.getElementById("downloadBtnContainer").innerHTML = "";
+    }
+  </script>
+</body>
+</html>
